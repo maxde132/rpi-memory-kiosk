@@ -1,0 +1,116 @@
+<html>
+  <head>
+    <style>
+      body {
+        cursor: none; /* Hide the cursor */
+        font-size: 20px;
+        font-family: 'Roboto', sans-serif;
+        background-color: black;
+        color: white;
+        position: absolute;
+        bottom: 0;
+        width: 80%;
+        left: 5px;
+        padding: 10px;
+        transition: opacity 1s ease-in-out;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+
+      .container {
+        max-width: 80%;
+        text-align: left;
+        border-top: 5px solid white;
+        padding-top: 5px;
+      }
+
+      .emoji {
+        font-size: 50px;
+      }
+
+      p {
+        font-size: 50px;
+      }
+    </style>
+  </head>
+  <body id="background">
+    <div class="container">
+      <div class="emoji" id="weather-emoji"></div>
+    </div>
+
+    <script>
+      let imageIndex = 1;
+      const totalImages = INSERTTOTALAMOUNTOFIMAGESHERE;
+      const background = document.getElementById("background");
+
+      function preloadImages() {
+        for (let i = 1; i <= totalImages; i++) {
+          const img = new Image();
+          img.src = `memories/${i}.JPEG`;
+        }
+      }
+
+      function changeBackground() {
+        background.style.opacity = 0;
+
+        setTimeout(() => {
+          background.style.backgroundImage = `url('memories/${imageIndex}.JPEG')`;
+          background.style.opacity = 1;
+
+          imageIndex = (imageIndex % totalImages) + 1;
+        }, 1000);
+      }
+
+      async function fetchWeather() {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=INSERTLATITUDEHERE&longitude=INSERTLONGITUDEHERE&current_weather=true`;
+
+        try {
+          const response = await fetch(url);
+          const data = await response.json();
+          const weather = data.current_weather;
+
+          if (!weather) {
+            console.error("Weather data not found!");
+            return;
+          }
+
+          const temperatureF = (weather.temperature * 9/5) + 32;
+
+          
+          const now = new Date();
+          const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+          const dayOfWeek = days[now.getDay()];
+          const dayOfMonth = now.getDate();
+          let hours = now.getHours();
+          const minutes = now.getMinutes().toString().padStart(2, "0");
+          const amPm = hours >= 12 ? "PM" : "AM";
+          hours = hours % 12 || 12;
+
+          const formattedDateTime = `${dayOfWeek} ${dayOfMonth} | ${hours}:${minutes} ${amPm}`;
+
+          
+          const weatherEmojis = {
+            0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+            45: "🌫️", 48: "🌫️", 51: "🌧️",
+            61: "🌧️", 71: "❄️", 80: "🌦️"
+          };
+
+          const conditionEmoji = weatherEmojis[weather.weathercode] || "❓";
+
+          document.getElementById("weather-emoji").innerText = `${conditionEmoji} | ${formattedDateTime} Temperature: ${temperatureF.toFixed(1)}°F`;
+
+        } catch (error) {
+          console.error("Error fetching weather:", error);
+        }
+      }
+
+      window.onload = function () {
+        preloadImages();
+        fetchWeather();
+        setInterval(fetchWeather, 60000);
+        setInterval(changeBackground, 30000);
+      };
+    </script>
+  </body>
+</html>
